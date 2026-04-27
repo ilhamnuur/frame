@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Display Layanan BPS Tuban</title>
+  <style>
+    :root {
+      --blue: #063970;
+      --blue-dark: #052b54;
+      --green: #1f9d55;
+      --orange: #f59e0b;
+      --text: #f8fafc;
+      --muted: #dbe7f3;
+      --divider: rgba(255, 255, 255, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      overflow: hidden;
+      background: #06111f;
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .display {
+      display: grid;
+      grid-template-rows: 72px minmax(0, 1fr) 54px;
+      width: 100vw;
+      height: 100vh;
+      background: #06111f;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 28px;
+      padding: 0 28px;
+      background: linear-gradient(90deg, var(--blue-dark), var(--blue));
+      border-bottom: 1px solid var(--divider);
+    }
+
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .brand strong {
+      font-size: 28px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .brand span {
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .clock {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: #ffffff;
+      font-size: 22px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .clock small {
+      color: var(--muted);
+      font-size: 16px;
+      font-weight: 400;
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: minmax(0, 64%) minmax(340px, 36%);
+      min-height: 0;
+    }
+
+    .panel {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      background: #000;
+    }
+
+    .panel + .panel {
+      border-left: 1px solid var(--divider);
+    }
+
+    .panel-label {
+      position: absolute;
+      z-index: 2;
+      top: 14px;
+      left: 14px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: rgba(5, 43, 84, 0.92);
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    iframe {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #000;
+    }
+
+    .video iframe {
+      aspect-ratio: 16 / 9;
+    }
+
+    .ticker {
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      background: #082f49;
+      border-top: 1px solid var(--divider);
+    }
+
+    .ticker-label {
+      display: flex;
+      align-items: center;
+      align-self: stretch;
+      padding: 0 24px;
+      background: var(--orange);
+      color: #111827;
+      font-size: 20px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .ticker-track {
+      min-width: 0;
+      overflow: hidden;
+      flex: 1;
+    }
+
+    .ticker-text {
+      display: inline-block;
+      min-width: 100%;
+      padding-left: 100%;
+      color: #ffffff;
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 54px;
+      white-space: nowrap;
+      animation: marquee 34s linear infinite;
+    }
+
+    @keyframes marquee {
+      from {
+        transform: translateX(0);
+      }
+      to {
+        transform: translateX(-100%);
+      }
+    }
+
+    @media (max-aspect-ratio: 4 / 3) {
+      .display {
+        grid-template-rows: 64px minmax(0, 1fr) 50px;
+      }
+
+      .main {
+        grid-template-columns: 1fr;
+        grid-template-rows: 42% 58%;
+      }
+
+      .panel + .panel {
+        border-left: 0;
+        border-top: 1px solid var(--divider);
+      }
+
+      .brand strong {
+        font-size: 22px;
+      }
+
+      .brand span,
+      .clock small {
+        display: none;
+      }
+
+      .clock {
+        font-size: 18px;
+      }
+
+      .ticker-label {
+        padding: 0 16px;
+        font-size: 16px;
+      }
+
+      .ticker-text {
+        font-size: 20px;
+        line-height: 50px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="display">
+    <header class="topbar">
+      <div class="brand">
+        <strong>BPS Kabupaten Tuban</strong>
+        <span>Sentra Pelayanan Statistik Terpadu</span>
+      </div>
+      <div class="clock">
+        <small id="date">Senin, 27 April 2026</small>
+        <span id="time">00:00</span>
+      </div>
+    </header>
+
+    <section class="main" aria-label="Display video profil dan antrian pelayanan">
+      <div class="panel video">
+        <div class="panel-label">Video Profil</div>
+        <iframe
+          id="videoFrame"
+          src="https://www.youtube.com/embed/videoseries?list=PLxLhyV7kYwXwnF-9BWRrK6im3B4irkIvv&autoplay=1&mute=1&loop=1&controls=0&rel=0"
+          title="Playlist Video Profil BPS"
+          allow="autoplay; encrypted-media; picture-in-picture"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen>
+        </iframe>
+      </div>
+
+      <div class="panel queue">
+        <div class="panel-label">Antrian Pelayanan</div>
+        <iframe
+          id="queueFrame"
+          src="https://antri.bpstuban.my.id/qr"
+          title="Antrian Pelayanan BPS Tuban">
+        </iframe>
+      </div>
+    </section>
+
+    <footer class="ticker" aria-label="Informasi berjalan">
+      <div class="ticker-label">INFO</div>
+      <div class="ticker-track">
+        <span class="ticker-text" id="tickerText">
+          Selamat datang di BPS Kabupaten Tuban &bull; Pelayanan Statistik Terpadu &bull; Silakan menunggu nomor antrian Anda dipanggil &bull; Jangan lupa mengisi buku tamu dan survei kepuasan layanan &bull;
+        </span>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    const dateFormatter = new Intl.DateTimeFormat("id-ID", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: "Asia/Jakarta"
+    });
+
+    const timeFormatter = new Intl.DateTimeFormat("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Asia/Jakarta"
+    });
+
+    function updateClock() {
+      const now = new Date();
+      document.getElementById("date").textContent = dateFormatter.format(now);
+      document.getElementById("time").textContent = timeFormatter.format(now).replace(".", ":");
+    }
+
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    function buildPlaylistUrl(playlistId) {
+      return `https://www.youtube.com/embed/videoseries?list=${encodeURIComponent(playlistId)}&autoplay=1&mute=1&loop=1&controls=0&rel=0`;
+    }
+
+    let activeConfig = "";
+
+    async function loadConfig() {
+      try {
+        const response = await fetch("/api/config", { cache: "no-store" });
+        if (!response.ok) {
+          return;
+        }
+
+        const config = await response.json();
+        const serializedConfig = JSON.stringify(config);
+        if (serializedConfig === activeConfig) {
+          return;
+        }
+
+        activeConfig = serializedConfig;
+
+        if (config.playlistId) {
+          const nextVideoUrl = buildPlaylistUrl(config.playlistId);
+          if (videoFrame.src !== nextVideoUrl) {
+            videoFrame.src = nextVideoUrl;
+          }
+        }
+
+        if (config.queueUrl && queueFrame.src !== config.queueUrl) {
+          queueFrame.src = config.queueUrl;
+        }
+
+        if (config.tickerText) {
+          tickerText.textContent = config.tickerText;
+        }
+      } catch (error) {
+        console.warn("Gagal mengambil pengaturan display", error);
+      }
+    }
+
+    loadConfig();
+    setInterval(loadConfig, 30000);
+  </script>
+</body>
+</html>
