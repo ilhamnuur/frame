@@ -161,7 +161,6 @@
 
       <div class="actions">
         <button type="submit">Simpan Pengaturan</button>
-        <button type="button" id="reloadQueue">Refresh Antrian</button>
         <a class="button-link" href="/" target="_blank" rel="noopener">Buka Display</a>
         <span class="status" id="status"></span>
       </div>
@@ -171,7 +170,6 @@
   <script>
     const form = document.getElementById("settingsForm");
     const statusEl = document.getElementById("status");
-    const reloadQueueButton = document.getElementById("reloadQueue");
 
     function showStatus(message, isError = false) {
       statusEl.textContent = message;
@@ -215,12 +213,6 @@
       } catch (error) {
         showStatus(error.message, true);
       }
-    });
-
-    reloadQueueButton.addEventListener("click", async () => {
-      const separator = form.queueUrl.value.includes("?") ? "&" : "?";
-      form.queueUrl.value = `${form.queueUrl.value.replace(/[?&]displayReload=\d+$/, "")}${separator}displayReload=${Date.now()}`;
-      form.dispatchEvent(new Event("submit", { cancelable: true }));
     });
 
     loadSettings().catch(() => {

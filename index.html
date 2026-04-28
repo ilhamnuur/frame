@@ -119,47 +119,6 @@
       letter-spacing: 0;
     }
 
-    .queue {
-      display: grid;
-      grid-template-rows: 38px minmax(0, 1fr);
-    }
-
-    .queue .panel-label {
-      top: 52px;
-    }
-
-    .browser-bar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 0;
-      padding: 7px 10px;
-      background: #111827;
-      border-bottom: 1px solid var(--divider);
-    }
-
-    .browser-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--green);
-      flex: 0 0 auto;
-    }
-
-    .browser-url {
-      min-width: 0;
-      flex: 1;
-      overflow: hidden;
-      border-radius: 5px;
-      padding: 5px 10px;
-      background: #f8fafc;
-      color: #1f2937;
-      font-size: 13px;
-      line-height: 1;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
     iframe {
       display: block;
       width: 100%;
@@ -287,10 +246,6 @@
       </div>
 
       <div class="panel queue">
-        <div class="browser-bar" aria-label="Alamat website antrian">
-          <span class="browser-dot"></span>
-          <span class="browser-url" id="queueAddress">https://antri.bpstuban.my.id/qr</span>
-        </div>
         <div class="panel-label">Antrian Pelayanan</div>
         <iframe
           id="queueFrame"
@@ -364,7 +319,6 @@
         }
 
         if (config.queueUrl) {
-          queueAddress.textContent = config.queueUrl;
           if (queueFrame.src !== config.queueUrl) {
             queueFrame.src = config.queueUrl;
           }
