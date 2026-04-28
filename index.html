@@ -14,6 +14,8 @@
       --text: #f8fafc;
       --muted: #dbe7f3;
       --divider: rgba(255, 255, 255, 0.16);
+      --video-width: 64%;
+      --queue-width: 36%;
     }
 
     * {
@@ -90,7 +92,7 @@
 
     .main {
       display: grid;
-      grid-template-columns: minmax(0, 64%) minmax(340px, 36%);
+      grid-template-columns: minmax(0, var(--video-width)) minmax(340px, var(--queue-width));
       min-height: 0;
     }
 
@@ -316,6 +318,12 @@
           if (videoFrame.src !== nextVideoUrl) {
             videoFrame.src = nextVideoUrl;
           }
+        }
+
+        if (config.videoWidthPercent) {
+          const videoWidth = Math.min(80, Math.max(35, Number(config.videoWidthPercent)));
+          document.documentElement.style.setProperty("--video-width", `${videoWidth}%`);
+          document.documentElement.style.setProperty("--queue-width", `${100 - videoWidth}%`);
         }
 
         if (config.queueUrl) {

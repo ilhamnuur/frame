@@ -78,6 +78,18 @@
       font: inherit;
     }
 
+    input[type="range"] {
+      padding: 0;
+      accent-color: #063970;
+    }
+
+    .range-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 82px;
+      gap: 12px;
+      align-items: center;
+    }
+
     textarea {
       min-height: 130px;
       resize: vertical;
@@ -155,6 +167,15 @@
       </label>
 
       <label>
+        Lebar Video Profil
+        <div class="range-row">
+          <input id="videoWidthPercent" name="videoWidthPercent" type="range" min="35" max="80" step="1">
+          <input id="videoWidthNumber" name="videoWidthNumber" type="number" min="35" max="80" step="1">
+        </div>
+        <span class="hint">Kecilkan nilai ini untuk memperlebar frame antrian/QR. Sisa lebar otomatis dipakai untuk antrian pelayanan.</span>
+      </label>
+
+      <label>
         Running Text
         <textarea id="tickerText" name="tickerText" required></textarea>
       </label>
@@ -181,6 +202,8 @@
       const config = await response.json();
       form.playlistId.value = config.playlistId || "";
       form.videoMuted.checked = config.videoMuted === true;
+      form.videoWidthPercent.value = config.videoWidthPercent || 64;
+      form.videoWidthNumber.value = config.videoWidthPercent || 64;
       form.queueUrl.value = config.queueUrl || "";
       form.tickerText.value = config.tickerText || "";
     }
@@ -192,6 +215,7 @@
       const payload = {
         playlistId: form.playlistId.value.trim(),
         videoMuted: form.videoMuted.checked,
+        videoWidthPercent: Number(form.videoWidthPercent.value),
         queueUrl: form.queueUrl.value.trim(),
         tickerText: form.tickerText.value.trim()
       };
@@ -213,6 +237,14 @@
       } catch (error) {
         showStatus(error.message, true);
       }
+    });
+
+    form.videoWidthPercent.addEventListener("input", () => {
+      form.videoWidthNumber.value = form.videoWidthPercent.value;
+    });
+
+    form.videoWidthNumber.addEventListener("input", () => {
+      form.videoWidthPercent.value = form.videoWidthNumber.value;
     });
 
     loadSettings().catch(() => {

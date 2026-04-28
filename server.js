@@ -9,6 +9,7 @@ const configPath = path.join(root, "config.json");
 const defaultConfig = {
   playlistId: "PLxLhyV7kYwXwnF-9BWRrK6im3B4irkIvv",
   videoMuted: true,
+  videoWidthPercent: 64,
   queueUrl: "https://antri.bpstuban.my.id/qr",
   tickerText: "Selamat datang di BPS Kabupaten Tuban - Pelayanan Statistik Terpadu - Silakan menunggu nomor antrian Anda dipanggil - Jangan lupa mengisi buku tamu dan survei kepuasan layanan -"
 };
@@ -59,6 +60,7 @@ function extractPlaylistId(value) {
 function validateConfig(input) {
   const playlistId = extractPlaylistId(input.playlistId);
   const videoMuted = input.videoMuted === true || input.videoMuted === "true";
+  const videoWidthPercent = Number(input.videoWidthPercent || defaultConfig.videoWidthPercent);
   const queueUrl = String(input.queueUrl || "").trim();
   const tickerText = String(input.tickerText || "").trim();
 
@@ -81,9 +83,14 @@ function validateConfig(input) {
     throw new Error("Running text tidak boleh kosong.");
   }
 
+  if (!Number.isFinite(videoWidthPercent) || videoWidthPercent < 35 || videoWidthPercent > 80) {
+    throw new Error("Lebar video harus antara 35 sampai 80 persen.");
+  }
+
   return {
     playlistId,
     videoMuted,
+    videoWidthPercent: Math.round(videoWidthPercent),
     queueUrl: parsedQueueUrl.toString(),
     tickerText
   };

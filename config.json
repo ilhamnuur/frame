@@ -1,6 +1,7 @@
 {
   "playlistId": "PLxLhyV7kYwXwnF-9BWRrK6im3B4irkIvv",
-  "videoMuted": true,
+  "videoMuted": false,
+  "videoWidthPercent": 72,
   "queueUrl": "https://antri.bpstuban.my.id/qr/display",
   "tickerText": "Selamat datang di BPS Kabupaten Tuban - Pelayanan Statistik Terpadu - Silakan menunggu nomor antrian Anda dipanggil - Jangan lupa mengisi buku tamu dan survei kepuasan layanan -"
 }
