@@ -8,6 +8,7 @@ const root = __dirname;
 const configPath = path.join(root, "config.json");
 const defaultConfig = {
   playlistId: "PLxLhyV7kYwXwnF-9BWRrK6im3B4irkIvv",
+  videoMuted: false,
   queueUrl: "https://antri.bpstuban.my.id/qr",
   tickerText: "Selamat datang di BPS Kabupaten Tuban - Pelayanan Statistik Terpadu - Silakan menunggu nomor antrian Anda dipanggil - Jangan lupa mengisi buku tamu dan survei kepuasan layanan -"
 };
@@ -57,6 +58,7 @@ function extractPlaylistId(value) {
 
 function validateConfig(input) {
   const playlistId = extractPlaylistId(input.playlistId);
+  const videoMuted = input.videoMuted === true || input.videoMuted === "true";
   const queueUrl = String(input.queueUrl || "").trim();
   const tickerText = String(input.tickerText || "").trim();
 
@@ -81,6 +83,7 @@ function validateConfig(input) {
 
   return {
     playlistId,
+    videoMuted,
     queueUrl: parsedQueueUrl.toString(),
     tickerText
   };

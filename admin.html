@@ -55,6 +55,19 @@
       font-weight: 700;
     }
 
+    .check-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .check-row input {
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+      flex: 0 0 auto;
+    }
+
     input,
     textarea {
       width: 100%;
@@ -127,6 +140,14 @@
         <span class="hint">Boleh isi ID saja, misalnya PLxLhy..., atau paste URL playlist YouTube lengkap.</span>
       </label>
 
+      <label class="check-row">
+        <input id="videoMuted" name="videoMuted" type="checkbox">
+        <span>
+          Matikan suara video
+          <span class="hint">Jika dicentang, autoplay lebih mudah berjalan di browser/STB. Jika tidak dicentang, suara akan aktif.</span>
+        </span>
+      </label>
+
       <label>
         URL Website Antrian
         <input id="queueUrl" name="queueUrl" type="url" required>
@@ -161,6 +182,7 @@
       const response = await fetch("/api/config", { cache: "no-store" });
       const config = await response.json();
       form.playlistId.value = config.playlistId || "";
+      form.videoMuted.checked = config.videoMuted === true;
       form.queueUrl.value = config.queueUrl || "";
       form.tickerText.value = config.tickerText || "";
     }
@@ -171,6 +193,7 @@
 
       const payload = {
         playlistId: form.playlistId.value.trim(),
+        videoMuted: form.videoMuted.checked,
         queueUrl: form.queueUrl.value.trim(),
         tickerText: form.tickerText.value.trim()
       };
