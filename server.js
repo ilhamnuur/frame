@@ -2,8 +2,8 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 
-const port = 8080;
-const host = "127.0.0.1";
+const port = Number(process.env.PORT || 7075);
+const host = process.env.HOST || "0.0.0.0";
 const root = __dirname;
 const configPath = path.join(root, "config.json");
 const defaultConfig = {
@@ -150,5 +150,5 @@ const server = http.createServer((request, response) => {
 });
 
 server.listen(port, host, () => {
-  console.log(`Display BPS Tuban berjalan di http://localhost:${port}`);
+  console.log(`Display BPS Tuban berjalan di http://${host}:${port}`);
 });

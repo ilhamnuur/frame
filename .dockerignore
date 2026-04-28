@@ -1,0 +1,7 @@
+.git
+.qodo
+server-*.log
+node_modules
+npm-debug.log
+Dockerfile
+docker-compose.yml
