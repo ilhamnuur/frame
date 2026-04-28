@@ -130,7 +130,7 @@
       <label>
         URL Website Antrian
         <input id="queueUrl" name="queueUrl" type="url" required>
-        <span class="hint">Contoh: https://antri.bpstuban.my.id/qr</span>
+        <span class="hint">URL ini akan dimuat ulang di panel antrian display, seperti mengganti alamat di browser.</span>
       </label>
 
       <label>
@@ -140,6 +140,7 @@
 
       <div class="actions">
         <button type="submit">Simpan Pengaturan</button>
+        <button type="button" id="reloadQueue">Refresh Antrian</button>
         <a class="button-link" href="/" target="_blank" rel="noopener">Buka Display</a>
         <span class="status" id="status"></span>
       </div>
@@ -149,6 +150,7 @@
   <script>
     const form = document.getElementById("settingsForm");
     const statusEl = document.getElementById("status");
+    const reloadQueueButton = document.getElementById("reloadQueue");
 
     function showStatus(message, isError = false) {
       statusEl.textContent = message;
@@ -186,10 +188,16 @@
         }
 
         form.playlistId.value = result.playlistId;
-        showStatus("Pengaturan tersimpan. Display akan memperbarui otomatis maksimal 30 detik.");
+        showStatus("Pengaturan tersimpan. Display akan memperbarui otomatis maksimal 5 detik.");
       } catch (error) {
         showStatus(error.message, true);
       }
+    });
+
+    reloadQueueButton.addEventListener("click", async () => {
+      const separator = form.queueUrl.value.includes("?") ? "&" : "?";
+      form.queueUrl.value = `${form.queueUrl.value.replace(/[?&]displayReload=\d+$/, "")}${separator}displayReload=${Date.now()}`;
+      form.dispatchEvent(new Event("submit", { cancelable: true }));
     });
 
     loadSettings().catch(() => {
