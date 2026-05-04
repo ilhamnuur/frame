@@ -11,7 +11,9 @@ const defaultConfig = {
   videoMuted: true,
   videoWidthPercent: 64,
   queueUrl: "https://antri.bpstuban.my.id/qr",
-  tickerText: "Selamat datang di BPS Kabupaten Tuban - Pelayanan Statistik Terpadu - Silakan menunggu nomor antrian Anda dipanggil - Jangan lupa mengisi buku tamu dan survei kepuasan layanan -"
+  tickerText: "Selamat datang di BPS Kabupaten Tuban - Pelayanan Statistik Terpadu - Silakan menunggu nomor antrian Anda dipanggil - Jangan lupa mengisi buku tamu dan survei kepuasan layanan -",
+  mediaSource: "youtube",
+  localPlaylist: []
 };
 
 const contentTypes = {
@@ -23,7 +25,9 @@ const contentTypes = {
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
   ".svg": "image/svg+xml",
-  ".ico": "image/x-icon"
+  ".ico": "image/x-icon",
+  ".mp4": "video/mp4",
+  ".webm": "video/webm"
 };
 
 function sendJson(response, statusCode, data) {
@@ -63,8 +67,10 @@ function validateConfig(input) {
   const videoWidthPercent = Number(input.videoWidthPercent || defaultConfig.videoWidthPercent);
   const queueUrl = String(input.queueUrl || "").trim();
   const tickerText = String(input.tickerText || "").trim();
+  const mediaSource = input.mediaSource === "local" ? "local" : "youtube";
+  const localPlaylist = Array.isArray(input.localPlaylist) ? input.localPlaylist : [];
 
-  if (!playlistId || !/^[a-zA-Z0-9_-]+$/.test(playlistId)) {
+  if (mediaSource === "youtube" && (!playlistId || !/^[a-zA-Z0-9_-]+$/.test(playlistId))) {
     throw new Error("ID playlist YouTube tidak valid.");
   }
 
@@ -92,7 +98,9 @@ function validateConfig(input) {
     videoMuted,
     videoWidthPercent: Math.round(videoWidthPercent),
     queueUrl: parsedQueueUrl.toString(),
-    tickerText
+    tickerText,
+    mediaSource,
+    localPlaylist
   };
 }
 
@@ -111,6 +119,40 @@ function readBody(request) {
     request.on("end", () => resolve(body));
     request.on("error", reject);
   });
+}
+
+function streamFile(filePath, request, response) {
+  const stat = fs.statSync(filePath);
+  const fileSize = stat.size;
+  const range = request.headers.range;
+
+  const ext = path.extname(filePath).toLowerCase();
+  const contentType = contentTypes[ext] || "application/octet-stream";
+
+  if (range) {
+    const parts = range.replace(/bytes=/, "").split("-");
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+    const chunksize = (end - start) + 1;
+    const file = fs.createReadStream(filePath, { start, end });
+    const head = {
+      "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+      "Accept-Ranges": "bytes",
+      "Content-Length": chunksize,
+      "Content-Type": contentType,
+      "Referrer-Policy": "strict-origin-when-cross-origin"
+    };
+    response.writeHead(206, head);
+    file.pipe(response);
+  } else {
+    const head = {
+      "Content-Length": fileSize,
+      "Content-Type": contentType,
+      "Referrer-Policy": "strict-origin-when-cross-origin"
+    };
+    response.writeHead(200, head);
+    fs.createReadStream(filePath).pipe(response);
+  }
 }
 
 const server = http.createServer((request, response) => {
@@ -134,6 +176,40 @@ const server = http.createServer((request, response) => {
     return;
   }
 
+  if (requestUrl.pathname === "/api/upload" && request.method === "POST") {
+    const mediaDir = path.join(root, "media");
+    if (!fs.existsSync(mediaDir)) {
+      fs.mkdirSync(mediaDir);
+    }
+    const fileNameHeader = request.headers['x-file-name'];
+    if (!fileNameHeader) {
+      sendJson(response, 400, { error: "Nama file tidak disertakan." });
+      return;
+    }
+    const fileName = decodeURIComponent(fileNameHeader);
+    const safeName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const writeStream = fs.createWriteStream(path.join(mediaDir, safeName));
+    request.pipe(writeStream);
+    request.on('end', () => sendJson(response, 200, { success: true, fileName: safeName }));
+    request.on('error', (err) => sendJson(response, 500, { error: err.message }));
+    return;
+  }
+
+  if (requestUrl.pathname.startsWith("/api/media/") && request.method === "DELETE") {
+    const fileName = decodeURIComponent(requestUrl.pathname.split("/").pop());
+    const safeName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const filePath = path.join(root, "media", safeName);
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+      sendJson(response, 200, { success: true });
+    } catch (e) {
+      sendJson(response, 500, { error: e.message });
+    }
+    return;
+  }
+
   const normalizedPath = path.normalize(decodeURIComponent(requestUrl.pathname));
   const relativePath = normalizedPath === path.sep ? "index.html" : normalizedPath.replace(/^[/\\]+/, "");
   const filePath = path.join(root, relativePath);
@@ -144,18 +220,14 @@ const server = http.createServer((request, response) => {
     return;
   }
 
-  fs.readFile(filePath, (error, content) => {
-    if (error) {
+  fs.stat(filePath, (error, stat) => {
+    if (error || !stat.isFile()) {
       response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
       response.end("File tidak ditemukan");
       return;
     }
-
-    response.writeHead(200, {
-      "Content-Type": contentTypes[path.extname(filePath).toLowerCase()] || "application/octet-stream",
-      "Referrer-Policy": "strict-origin-when-cross-origin"
-    });
-    response.end(content);
+    
+    streamFile(filePath, request, response);
   });
 });
 

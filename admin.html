@@ -147,10 +147,28 @@
 
     <form id="settingsForm">
       <label>
+        Sumber Media
+        <select id="mediaSource" name="mediaSource" style="padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 6px; font: inherit;">
+          <option value="youtube">Playlist YouTube</option>
+          <option value="local">File Lokal (Video/Gambar)</option>
+        </select>
+      </label>
+
+      <label id="youtubeSection">
         ID Playlist YouTube
-        <input id="playlistId" name="playlistId" autocomplete="off" required>
+        <input id="playlistId" name="playlistId" autocomplete="off">
         <span class="hint">Boleh isi ID saja, misalnya PLxLhy..., atau paste URL playlist YouTube lengkap.</span>
       </label>
+
+      <div id="localSection" style="display: none; border: 1px solid #cbd5e1; padding: 16px; border-radius: 6px;">
+        <label style="margin-bottom: 8px;">
+          Playlist Lokal
+          <input type="file" id="mediaUpload" accept="video/mp4,video/webm,image/jpeg,image/png">
+          <span class="hint">Pilih file untuk diunggah (mp4, webm, jpg, png). File akan otomatis ditambahkan ke daftar.</span>
+        </label>
+        <ul id="localPlaylist" style="list-style: none; padding: 0; margin-top: 16px; display: grid; gap: 8px;">
+        </ul>
+      </div>
 
       <label class="check-row">
         <input id="videoMuted" name="videoMuted" type="checkbox">
@@ -191,33 +209,113 @@
   <script>
     const form = document.getElementById("settingsForm");
     const statusEl = document.getElementById("status");
+    const mediaSource = document.getElementById("mediaSource");
+    const youtubeSection = document.getElementById("youtubeSection");
+    const localSection = document.getElementById("localSection");
+    const mediaUpload = document.getElementById("mediaUpload");
+    const localPlaylistEl = document.getElementById("localPlaylist");
+
+    let currentLocalPlaylist = [];
+
+    mediaSource.addEventListener("change", () => {
+      youtubeSection.style.display = mediaSource.value === "youtube" ? "grid" : "none";
+      localSection.style.display = mediaSource.value === "local" ? "block" : "none";
+    });
 
     function showStatus(message, isError = false) {
       statusEl.textContent = message;
       statusEl.classList.toggle("error", isError);
     }
 
+    function renderPlaylist() {
+      localPlaylistEl.innerHTML = "";
+      currentLocalPlaylist.forEach((item, index) => {
+        const li = document.createElement("li");
+        li.style.display = "flex";
+        li.style.justifyContent = "space-between";
+        li.style.alignItems = "center";
+        li.style.background = "#f8fafc";
+        li.style.padding = "8px 12px";
+        li.style.border = "1px solid #cbd5e1";
+        li.style.borderRadius = "4px";
+
+        const span = document.createElement("span");
+        span.textContent = item.name + " (" + item.type + ")";
+        
+        const btn = document.createElement("button");
+        btn.textContent = "Hapus";
+        btn.type = "button";
+        btn.style.padding = "4px 8px";
+        btn.style.background = "#dc2626";
+        btn.onclick = () => removeMedia(index, item.name);
+
+        li.appendChild(span);
+        li.appendChild(btn);
+        localPlaylistEl.appendChild(li);
+      });
+    }
+
+    async function removeMedia(index, fileName) {
+      if (!confirm("Hapus " + fileName + "?")) return;
+      try {
+        await fetch("/api/media/" + encodeURIComponent(fileName), { method: "DELETE" });
+      } catch (e) { console.error(e); }
+      currentLocalPlaylist.splice(index, 1);
+      renderPlaylist();
+      saveConfig();
+    }
+
+    mediaUpload.addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      showStatus("Mengunggah " + file.name + "...", false);
+      try {
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          headers: { "x-file-name": encodeURIComponent(file.name) },
+          body: file
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error);
+        
+        const type = file.type.startsWith("image/") ? "image" : "video";
+        currentLocalPlaylist.push({ name: result.fileName, type });
+        renderPlaylist();
+        saveConfig();
+        showStatus("Berhasil diunggah.");
+      } catch (err) {
+        showStatus(err.message, true);
+      }
+      mediaUpload.value = "";
+    });
+
     async function loadSettings() {
       const response = await fetch("/api/config", { cache: "no-store" });
       const config = await response.json();
+      form.mediaSource.value = config.mediaSource || "youtube";
       form.playlistId.value = config.playlistId || "";
       form.videoMuted.checked = config.videoMuted === true;
       form.videoWidthPercent.value = config.videoWidthPercent || 64;
       form.videoWidthNumber.value = config.videoWidthPercent || 64;
       form.queueUrl.value = config.queueUrl || "";
       form.tickerText.value = config.tickerText || "";
+      currentLocalPlaylist = config.localPlaylist || [];
+      mediaSource.dispatchEvent(new Event("change"));
+      renderPlaylist();
     }
 
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
+    async function saveConfig() {
       showStatus("Menyimpan...");
 
       const payload = {
+        mediaSource: form.mediaSource.value,
         playlistId: form.playlistId.value.trim(),
         videoMuted: form.videoMuted.checked,
         videoWidthPercent: Number(form.videoWidthPercent.value),
         queueUrl: form.queueUrl.value.trim(),
-        tickerText: form.tickerText.value.trim()
+        tickerText: form.tickerText.value.trim(),
+        localPlaylist: currentLocalPlaylist
       };
 
       try {
@@ -232,11 +330,18 @@
           throw new Error(result.error || "Pengaturan gagal disimpan");
         }
 
-        form.playlistId.value = result.playlistId;
+        if (result.mediaSource === 'youtube') {
+          form.playlistId.value = result.playlistId;
+        }
         showStatus("Pengaturan tersimpan. Display akan memperbarui otomatis maksimal 5 detik.");
       } catch (error) {
         showStatus(error.message, true);
       }
+    }
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      saveConfig();
     });
 
     form.videoWidthPercent.addEventListener("input", () => {
